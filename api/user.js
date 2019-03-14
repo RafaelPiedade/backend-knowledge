@@ -20,6 +20,7 @@ module.exports = app => {
             existsOrError(user.confirmPassword, 'Confirmação de Senha inválida')
             equalsOrError(user.password, user.confirmPassword, 'Senha não conferem')
 
+
             const userFromDB = await app.db('users')
                 .where({ email: user.email }).first()
             if (!user.id) {
@@ -33,7 +34,6 @@ module.exports = app => {
 
         user.password = encryptPassword(user.password)
         delete user.confirmPassword
-
         if (user.id) {
             app.db('users')
                 .update(user)
@@ -55,6 +55,15 @@ module.exports = app => {
             .catch(err => res.status(500).send(err))
     }
 
+    const getById = (req, res) => {
+        app.db('users')
+            .select('id', 'name', 'email', 'admin')
+            .where({ id: req.params.id })
+            .first()
+            .then(users => res.json(users))
+            .catch(err => res.status(500).send(err))
 
-    return { save, get }
+    }
+
+    return { save, get, getById }
 }
