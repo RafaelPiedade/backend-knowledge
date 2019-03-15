@@ -27,32 +27,74 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-
         try {
+            console.log('11')
             existsOrError(req.params.id, "Código da Categoria não informado.")
-
+            console.log('22')
             const subCategory = await app.db('categories')
                 .where({ parentId: req.params.id })
-            notExistisOrError(subCategory, 'Categoria possui Subcategorias')
-
+            console.log('Sub', subCategory, typeof subCategory,  !subCategory)
+            console.log('Subid', subCategory.id, typeof subCategory.id,  !subCategory.id)
+            notExistisOrError(subCategory.id, 'Categoria possui Subcategorias')
+            console.log('33')
             const articles = await app.db('articles')
                 .where({ categoryId: req.params.id })
             notExistisOrError(articles, 'Categoria possui Artigos')
-
+            console.log('44')
             const rowsDeleted = await app.db('categories')
                 .where({ id: req.params.id }).del()
             existsOrError(rowsDeleted, 'Categoria não foi encontrada.')
-
-            res.status(204).send()
+            console.log('55')
+            res.status(204).send('aaa')
         } catch (msg) {
             res.status(400).status(msg)
         }
     }
 
-    const withPath = categories =>{
-        const getParent = (categories, parentId)=>{
-            let parent = categories.filter(parent = parent.id === parentId)
+    const withPath = categories => {
+        console.log("entra withPath")
+        const getParent = (categories, parentId) => {
+            const parent = categories.filter(parent => parent.id === parentId)
             return parent.length ? parent[0] : null
         }
+
+        const categoriesWithPath = categories.map(category => {
+            let path = category.name
+            let parent = getParent(categories, category.parentId)
+
+            while (parent) {
+                path = `${parent.name} > ${path}`
+                parent = getParent(categories, parent.parentId)
+            }
+
+            return { ...category, path }
+        })
+
+        categoriesWithPath.sort((a, b) => {
+            if (a.path < b.path) return -1
+            if (a.path > b.path) return 1
+            return 0
+        })
+
+
+        return categoriesWithPath
     }
+
+    const get = (req, res) => {
+        app.db('categories')
+            .then(categories => res.json(withPath(categories)))
+            .catch(err => res.status(500).send(err))
+
+    }
+
+    const getById = (req, res) => {
+        app.db('categories')
+            .where({ id: req.params.id })
+            .first()
+            .then(category => res.json(category))
+            .catch(err => res.status(500).send(err))
+    }
+
+    return { save, remove, get, getById }
+
 }

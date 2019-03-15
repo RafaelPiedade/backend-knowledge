@@ -7,4 +7,17 @@ module.exports = app => {
       .get(app.api.user.getById)
       .put(app.api.user.save)
 
-}   
+   app.route('/categories')
+      .get(app.api.category.get)
+      .post(app.api.category.save)
+
+   app.route('/categories/:id')
+      .delete(app.api.category.remove)
+      .put(app.api.category.save)
+      .get(app.api.category.getById)
+}
+/*
+
+
+
+*/
